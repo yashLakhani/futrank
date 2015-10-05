@@ -10,6 +10,7 @@ all_data = []
 home_data = []
 away_data = []
 team_stats = []
+pred_data = []
 result_types = ['A', 'D', 'H']
 league_avg_gf = 0.0
 league_avg_ga = 0.0
@@ -17,13 +18,16 @@ league_avg_home_gf = 0.0
 league_avg_home_ga = 0.0
 league_avg_away_gf = 0.0
 league_avg_away_ga = 0.0
+predict_week_no = 8
 
 def get_result_data(file):
     csv_delimiter= ","
     df = pd.read_csv(file, sep=csv_delimiter)
-    global all_data, teams
+    week_index = (predict_week_no-1)*10
+    global all_data,pred_data, teams
     teams = sorted(list(set(df['HomeTeam']).union(set(df['AwayTeam']))))
-    all_data = df
+    all_data = df[0:week_index]
+    pred_data = df[week_index:]
     process_team_data()
     compute_league_statistics()
     compute_team_statistics()
@@ -119,6 +123,9 @@ def predict_result(home_team, away_team):
     print "Probability: " + str(probability)
 
 
+#def get_streak(team)
+
+
 
 get_result_data(filepath)
-predict_result(home_team='Chelsea', away_team='Southampton')
+predict_result(home_team='Arsenal', away_team='Man United')
