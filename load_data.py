@@ -90,7 +90,9 @@ def print_statistics(*args, **kwargs):
 
 import math
 def poisson_probability(actual, mean):
-    p = math.exp(-mean)
+    if actual > 1 : added = 0.01
+    else : added = 1
+    p = math.exp(-mean*added)
     for i in xrange(actual):
         p *= mean
         p /= i+1
