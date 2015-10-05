@@ -4,7 +4,8 @@ __author__ = 'YASH'
 import pandas as pd
 import numpy as np
 
-filepath = "result_data\E0.csv"
+#needs to be forward slash(/) for mac and (\) for windows
+filepath = "result_data/E0.csv"
 teams = []
 all_data = []
 home_data = []
@@ -94,9 +95,7 @@ def print_statistics(*args, **kwargs):
 
 import math
 def poisson_probability(actual, mean):
-    if actual > 1 : added = 0.01
-    else : added = 1
-    p = math.exp(-mean*added)
+    p = math.exp(-mean)
     for i in xrange(actual):
         p *= mean
         p /= i+1
@@ -105,6 +104,22 @@ def poisson_probability(actual, mean):
 def predict_result(home_team, away_team):
     HG = float(team_stats['H_Attacking'][team_stats['Team']==str(home_team)])*float(team_stats['A_Defence'][team_stats['Team']==str(away_team)])
     AG = float(team_stats['H_Defence'][team_stats['Team']==str(home_team)])*float(team_stats['A_Attacking'][team_stats['Team']==str(away_team)])
+    H_multiplier = 1
+    A_multiplier = 1
+    home_streak = get_streak(home_team)
+    away_streak = get_streak(away_team)
+    if home_streak['H'] >= 1: H_multiplier *= 0.5
+    if away_streak['A'] >= 1: A_multiplier *= 0.5
+    if (home_streak['H_L'] + home_streak['A_L']) >= 1: H_multiplier *= 2
+    if (away_streak['H_L'] + away_streak['A_L']) >= 1: A_multiplier *= 2
+    if home_streak['Avg_Dif'] > 0: h_s = home_streak['Avg_ST']/home_streak['Avg_Dif']
+    else: h_s = 1
+    if away_streak['Avg_Dif'] > 0: a_s = away_streak['Avg_ST']/away_streak['Avg_Dif']
+    else: a_s = 1
+    if (h_s < 0) & (h_s != 0) : h_s = 1/abs(h_s)
+    if (a_s < 0) & (a_s != 0): a_s = 1/abs(a_s)
+    HG *= H_multiplier*h_s
+    AG *= A_multiplier*a_s
     max_likelihood = 0
     home_team_goals = 0
     away_team_goals = 0
@@ -123,9 +138,22 @@ def predict_result(home_team, away_team):
     print "Probability: " + str(probability)
 
 
-#def get_streak(team)
-
-
+def get_streak(team):
+    streak_hash = {K:0 for K in result_types}
+    start = (predict_week_no-4)*10
+    end = (predict_week_no-1)*10
+    data = all_data[start:end]
+    home = data[data['HomeTeam']==str(team)]
+    away = data[data['AwayTeam']==str(team)]
+    streak_hash['H'] = list(home['FTR']).count('H')
+    streak_hash['A'] = list(away['FTR']).count('A')
+    streak_hash['D'] = list(home['FTR']).count('D') + list(away['FTR']).count('D')
+    streak_hash['H_L'] = list(home['FTR']).count('A')
+    streak_hash['A_L'] = list(away['FTR']).count('H')
+    streak_hash['Avg_ST'] = (np.mean(home['HST']) + np.mean(away['AST']))/2
+    streak_hash['Avg_Dif'] = int(((np.mean(home['HST']-home['AST'])) + (np.mean(away['AST']-away['HST'])))/2)
+    return streak_hash
 
 get_result_data(filepath)
-predict_result(home_team='Arsenal', away_team='Man United')
+predict_result(home_team='Chelsea', away_team='Southampton')
+get_streak('Arsenal')
