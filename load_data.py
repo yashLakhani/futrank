@@ -106,20 +106,7 @@ def predict_result(home_team, away_team):
     AG = float(team_stats['H_Defence'][team_stats['Team']==str(home_team)])*float(team_stats['A_Attacking'][team_stats['Team']==str(away_team)])
     H_multiplier = 1
     A_multiplier = 1
-    home_streak = get_streak(home_team)
-    away_streak = get_streak(away_team)
-    if home_streak['H'] >= 1: H_multiplier *= 0.5
-    if away_streak['A'] >= 1: A_multiplier *= 0.5
-    if (home_streak['H_L'] + home_streak['A_L']) >= 1: H_multiplier *= 2
-    if (away_streak['H_L'] + away_streak['A_L']) >= 1: A_multiplier *= 2
-    if home_streak['Avg_Dif'] > 0: h_s = home_streak['Avg_ST']/home_streak['Avg_Dif']
-    else: h_s = 1
-    if away_streak['Avg_Dif'] > 0: a_s = away_streak['Avg_ST']/away_streak['Avg_Dif']
-    else: a_s = 1
-    if (h_s < 0) & (h_s != 0) : h_s = 1/abs(h_s)
-    if (a_s < 0) & (a_s != 0): a_s = 1/abs(a_s)
-    HG *= H_multiplier*h_s
-    AG *= A_multiplier*a_s
+    HG, AG = get_multiplier(H_multiplier,A_multiplier, HG, AG, home_team, away_team)
     max_likelihood = 0
     home_team_goals = 0
     away_team_goals = 0
@@ -153,6 +140,24 @@ def get_streak(team):
     streak_hash['Avg_ST'] = (np.mean(home['HST']) + np.mean(away['AST']))/2
     streak_hash['Avg_Dif'] = int(((np.mean(home['HST']-home['AST'])) + (np.mean(away['AST']-away['HST'])))/2)
     return streak_hash
+
+def get_multiplier(H_multiplier, A_multiplier, HG, AG, home, away):
+    home_streak = get_streak(home)
+    away_streak = get_streak(away)
+    if home_streak['H'] >= 1: H_multiplier *= 0.5
+    if away_streak['A'] >= 1: A_multiplier *= 0.5
+    if (home_streak['H_L'] + home_streak['A_L']) >= 1: H_multiplier *= 2
+    if (away_streak['H_L'] + away_streak['A_L']) >= 1: A_multiplier *= 2
+    if home_streak['Avg_Dif'] > 0: h_s = home_streak['Avg_ST']/home_streak['Avg_Dif']
+    else: h_s = 1
+    if away_streak['Avg_Dif'] > 0: a_s = away_streak['Avg_ST']/away_streak['Avg_Dif']
+    else: a_s = 1
+    if (h_s < 0) & (h_s != 0) : h_s = 1/abs(h_s)
+    if (a_s < 0) & (a_s != 0): a_s = 1/abs(a_s)
+    HG *= H_multiplier*h_s
+    AG *= A_multiplier*a_s
+    return H_multiplier, A_multiplier
+
 
 get_result_data(filepath)
 predict_result(home_team='Chelsea', away_team='Southampton')
